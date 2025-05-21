@@ -131,6 +131,3 @@ When decrypting raw text, make sure you're providing only the intended text—no
 
 For file input, the file must be in the same folder as the program. Otherwise, you'll see a "Couldn't open the file" error.\
 Also, be sure to include the file extension (e.g., file.txt). If you just type file without the extension, the program will not accept it and will display the same error message.
-
-### Academic Honesty
-I used ChatGPT throughout the development of this project, but only as a tool to help me better understand the topics, explain certain concepts, assist with debugging, and identify possible issues in my code. All the core logic, code, and program design were implemented by me. Any help received was strictly to improve the robustness and clarity of the project.
