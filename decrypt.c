@@ -122,7 +122,7 @@ char *decrypt_playfair(char matrix[5][5], char digraphs[][3], int digraphs_count
     if (originaltext == NULL)
     {
         printf("No enough memory!\n");
-        exit(-2);
+        return NULL;
     }
 
     for (int i = 0; i < digraphs_count; i++)

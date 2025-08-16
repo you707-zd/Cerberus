@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include "encrypt.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +29,7 @@ char *encrypt_caesar(const char *text, int key)
         }
     }
 
+    temp[length] = '\0';
     return temp;
 }
 
@@ -98,7 +100,7 @@ void XOR_cipher(char *text, size_t text_len, char *key)
 }
 
 // ==== Playfair cipher ====
-void trimming(char **keyword)
+bool trimming(char **keyword)
 {
     int length = strlen(*keyword);
 
@@ -106,7 +108,7 @@ void trimming(char **keyword)
     if (temp == NULL)
     {
         printf("No enough memory!\n");
-        exit(-2);
+        return false;
     }
 
     int k = 0;
@@ -138,6 +140,7 @@ void trimming(char **keyword)
     free(*keyword);
     *keyword = strdup(temp);
     free(temp);
+    return true;
 }
 
 void matrix_5x5(char matrix[5][5], char *keyword)
@@ -177,7 +180,7 @@ void matrix_5x5(char matrix[5][5], char *keyword)
     }
 }
 
-void generate_digraphs(char *text, char digraphs[][2], int *count)
+bool generate_digraphs(char *text, char digraphs[][2], int *count)
 {
     int length = strlen(text);
     int k = 0;
@@ -186,7 +189,7 @@ void generate_digraphs(char *text, char digraphs[][2], int *count)
     if (temp == NULL)
     {
         printf("No enough memory!\n");
-        exit(-2);
+        return false;
     }
 
     for (int i = 0; i < length; i++)
@@ -227,6 +230,7 @@ void generate_digraphs(char *text, char digraphs[][2], int *count)
     }
 
     *count = digraph_index;
+    return true;
 }
 
 void find_position(char matrix[5][5], char letter, int *row, int *col)
@@ -254,7 +258,7 @@ char *encrypt_playfair(char matrix[5][5], char digraphs[][2], int digraphs_count
     if (ciphertext == NULL)
     {
         printf("No enough memory!\n");
-        exit(-2);
+        return NULL;
     }
 
     for (int i = 0; i < digraphs_count; i++)

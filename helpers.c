@@ -128,8 +128,6 @@ int choose_mode(void)
     if (main_menu == NULL)
     {
         printf("No enough memory!! \n");
-
-        free(main_menu);
         return MEMORY_ERROR;
     }
 
@@ -166,7 +164,6 @@ int choose_input_type(void)
     if (input_type_menu == NULL)
     {
         printf("No enough memory!! \n");
-
         return MEMORY_ERROR;
     }
 
@@ -201,7 +198,6 @@ int get_text_method(void)
     if (text_ciphers_menu == NULL)
     {
         printf("No enough memory!! \n");
-
         return MEMORY_ERROR;
     }
 
@@ -239,7 +235,7 @@ char *get_cipher_key(int cipher_type, char **key, int *int_key)
     if (text == NULL)
     {
         printf("\nNot enough memory!! \n");
-        exit(MEMORY_ERROR);
+        return NULL;
     }
 
     if (cipher_type == 1 || cipher_type == 5)
@@ -302,7 +298,7 @@ char *get_cipher_key(int cipher_type, char **key, int *int_key)
         {
             printf("\nNot enough memory!\n");
             free(text);
-            exit(MEMORY_ERROR);
+            return NULL;
         }
 
         while (1)
@@ -336,17 +332,18 @@ char *get_cipher_key(int cipher_type, char **key, int *int_key)
                 printf("\nINVALID INPUT!\n");
                 printf("\nKey must be alphabetical and less than or equal to the length of the text\nNo spaces, punctuations, numbers are accepted\n");
 
-                char *temp = get_string("\nEnter the key: ");
-                if (temp == NULL)
-                {
-                    printf("\nNot enough memory!\n");
-                    free(text);
-                    free(*key);
-                    exit(MEMORY_ERROR);
-                }
+                        char *temp = get_string("\nEnter the key: ");
+        if (temp == NULL)
+        {
+            printf("\nNot enough memory!\n");
+            free(text);
+            free(*key);
+            return NULL;
+        }
 
-                free(*key);
-                *key = temp;
+        free(*key);
+        *key = temp;
+        // Note: temp is now owned by *key, so we don't free it here
             }
         }
     }
@@ -361,7 +358,7 @@ char *get_cipher_key(int cipher_type, char **key, int *int_key)
         {
             printf("\nNot enough memory!\n");
             free(text);
-            exit(MEMORY_ERROR);
+            return NULL;
         }
     }
 
@@ -381,7 +378,6 @@ int choose_file_type(void)
     if (file_type == NULL)
     {
         printf("No enough memory!! \n");
-
         return MEMORY_ERROR;
     }
 
@@ -410,7 +406,7 @@ char *get_file_name(void)
     if (temp == NULL)
     {
         printf("No enough memory!!\n");
-        exit(MEMORY_ERROR);
+        return NULL;
     }
 
     int k = 0;
@@ -436,7 +432,7 @@ char *get_file_extension(char *file_name)
     if (extension == NULL)
     {
         printf("Memory allocation failed!\n");
-        exit(MEMORY_ERROR);
+        return NULL;
     }
 
     int i = length - 1;
@@ -528,14 +524,14 @@ char *get_output_file(char *file_extension, int indicator)
         if (file_output == NULL)
         {
             printf("Memory allocation failed!\n");
-            exit(MEMORY_ERROR);
+            return NULL;
         }
 
         strcpy(file_output, default_name);
     }
 
     char *output_extension = get_file_extension(file_output);
-    if (output_extension == NULL)
+    if (!output_extension)
     {
         printf("\nINVALID INPUT\n");
 
