@@ -1,13 +1,7 @@
 // Libraries and the other files
-#include "decrypt.h"
-#include "encrypt.h"
-#include "file_io.h"
 #include "flow_logic.h"
 #include "helpers.h"
-#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 
 int main(void)

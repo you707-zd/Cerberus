@@ -1,6 +1,8 @@
 #ifndef FLOW_LOGIC_H
 #define FLOW_LOGIC_H
 
+#include <stdio.h>
+
 int handling_text_encryption(void);
 int handling_text_decryption(void);
 int handling_file_encryption(void);
