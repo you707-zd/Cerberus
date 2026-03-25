@@ -5,12 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-//Error Numbers
-#define INPUT_ERROR -1
-#define MEMORY_ERROR -2
-#define FILE_ERROR -3
-#define NOT_IMPLEMENTED_ERROR -4
-
 char *get_string(char *prompt)
 {
     //My own version of get_string
@@ -507,70 +501,80 @@ char *get_output_file(char *file_extension, int indicator)
 
     if (*file_output == '\0')
     {
-        char *default_name;
+        free(file_output);  // free the empty string from get_file_name
+
+        char temp_default[256];
         if (indicator == 1)
         {
-            default_name = (strcasecmp(file_extension, ".csv") == 0)
-                                        ? "result.csv"
-                                        : "result.txt";
+            strcpy(temp_default, (strcasecmp(file_extension, ".csv") == 0)
+                ? "result.csv" : "result.txt");
         }
         else
         {
-            default_name = malloc(strlen("result.png") + 4);
-            sprintf(default_name, "result.%s", file_extension);
+            snprintf(temp_default, sizeof(temp_default), "result%s", file_extension);
         }
 
-        file_output = malloc(strlen(default_name) + 1);
+        file_output = strdup(temp_default);
         if (file_output == NULL)
         {
             printf("Memory allocation failed!\n");
             return NULL;
         }
-
-        strcpy(file_output, default_name);
     }
 
     char *output_extension = get_file_extension(file_output);
     if (!output_extension)
     {
         printf("\nINVALID INPUT\n");
-
-        free(output_extension);
         free(file_output);
-
         return NULL;
     }
 
-    if (indicator == 1 && strcasecmp(output_extension, ".txt") != 0 && strcasecmp(output_extension, ".csv") != 0)
+    if (indicator == 1 && strcasecmp(output_extension, ".txt") != 0
+        && strcasecmp(output_extension, ".csv") != 0)
     {
         printf("\nINVALID EXTENSION\n");
-
         free(output_extension);
         free(file_output);
-
         return NULL;
     }
 
-    char foo[32];
-    strcpy(foo, file_output);
-    int x = 0;
+    // check for existing file and rename if needed
+    char *base = get_extensionless_file_name(file_output);
+    free(file_output);
 
-    FILE *output_checking = fopen(foo, "r");
-    file_output = get_extensionless_file_name(file_output);
+    if (!base)
+    {
+        free(output_extension);
+        return NULL;
+    }
+
+    // build final filename with enough space for base + number + extension + null
+    int x = 0;
+    size_t buf_size = strlen(base) + strlen(output_extension) + 12;
+    char *final_name = malloc(buf_size);
+    if (!final_name)
+    {
+        free(base);
+        free(output_extension);
+        return NULL;
+    }
+
+    snprintf(final_name, buf_size, "%s%s", base, output_extension);
+
+    FILE *output_checking = fopen(final_name, "r");
     while (output_checking != NULL)
     {
         fclose(output_checking);
-
         x++;
-        sprintf(foo, "%s%i%s", file_output, x, output_extension);
-        FILE *temp = fopen(foo, "r");
-        output_checking = temp;
+        snprintf(final_name, buf_size, "%s%i%s", base, x, output_extension);
+        output_checking = fopen(final_name, "r");
     }
 
+    free(base);
     free(output_extension);
-    strcpy(file_output, foo);
 
-    return file_output;
+    return final_name;
 }
 
 int text_file_cipher_menu(void)
