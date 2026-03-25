@@ -1,0 +1,795 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include "file_io.h"
+#include "helpers.h"
+#include "flow_logic.h"
+#include "encrypt.h"
+#include "decrypt.h"
+
+int handling_text_encryption(void)
+{
+    int cipher_selected = get_text_method();
+    if (cipher_selected == INPUT_ERROR)
+    {
+        printf("INVALID INPUT!!\n");
+        return INPUT_ERROR;
+    }
+
+    char *key = NULL;
+    int int_key = 0;
+    char *text = get_cipher_key(cipher_selected, &key, &int_key);
+    if (!text) return MEMORY_ERROR;
+
+    if (cipher_selected == 1)
+    {
+        // Encrypting Caesar Cipher
+        char *cipher_text = encrypt_caesar(text, int_key);
+        if (cipher_text == NULL)
+        {
+            printf("\nNo enough memory!! \n");
+
+            free(text);
+            return MEMORY_ERROR;
+        }
+
+        printf("\nThe Cipher Text is: %s\n", cipher_text);
+
+        free(cipher_text);
+        free(text);
+
+        return 0;
+    }
+    else if (cipher_selected == 2)
+    {
+        //Encrypting Vigenere
+        char *cipher_text = encrypt_vigenere(text, key);
+        if (cipher_text == NULL)
+        {
+            printf("\nNo enough memory!\n");
+
+            free(text);
+            free(key);
+            return MEMORY_ERROR;
+        }
+
+        printf("\nThe Cipher Text is: %s\n", cipher_text);
+
+        free(cipher_text);
+        free(text);
+        free(key);
+
+        return 0;
+    }
+    else if (cipher_selected == 3)
+    {
+        //Encrypting XOR
+        size_t text_length = strlen(text);
+
+        XOR_cipher(text, text_length, key);
+
+        printf("\nThe Cipher Text is: ");
+        print_hex(text, text_length);
+
+        free(text);
+        free(key);
+
+        return 0;
+    }
+    else if (cipher_selected == 4)
+    {
+        //Encrypting playfair
+        char matrix[5][5];
+
+        char digraphs[100][2];
+        int counter = 0;
+
+        bool trim = trimming(&key);
+        if (!trim)
+        {
+            free(key);
+            return MEMORY_ERROR;
+        }
+
+        matrix_5x5(matrix, key);
+
+        bool diagraphs = generate_digraphs(text, digraphs, &counter);
+        if (!diagraphs)
+        {
+            free(key);
+            return MEMORY_ERROR;
+        }
+
+        char *ciphertext = encrypt_playfair(matrix, digraphs, counter);
+        if (!ciphertext) return MEMORY_ERROR;
+
+        printf("\nThe cipher text is: %s\n", ciphertext);
+
+        free(ciphertext);
+        free(key);
+
+        return 0;
+    }
+    else if (cipher_selected == 5)
+    {
+        //Encrypting Rail Fence Cipher
+        char *ciphertext = encrypt_railfence(text, int_key);
+        if (!ciphertext)
+        {
+            printf("\nNo enough memroy!\n");
+            free(text);
+            return MEMORY_ERROR;
+        }
+
+        printf("\nThe cipher text is: %s\n", ciphertext);
+
+        free(ciphertext);
+        free(text);
+
+        return 0;
+    }
+    else
+    {
+        printf("\nINVALID INPUT!\n");
+
+        return INPUT_ERROR;
+    }
+
+    return 0;
+}
+
+int handling_text_decryption(void)
+{
+    int cipher_selected = get_text_method();
+    if (cipher_selected == INPUT_ERROR)
+    {
+        printf("INVALID INPUT!!\n");
+        return INPUT_ERROR;
+    }
+
+    char *key = NULL;
+    int int_key = 0;
+    char *text = get_cipher_key(cipher_selected, &key, &int_key);
+    if (!text) return MEMORY_ERROR;
+
+    if (cipher_selected == 1)
+    {
+        // Decrypting Caesar Cipher
+        char * decrypted_message = decrypt_caesar(text, int_key);
+        if (decrypted_message == NULL)
+        {
+            printf("\nNo enough memory!! \n");
+
+            free(text);
+
+            return MEMORY_ERROR;
+        }
+
+        printf("\nThe decrypted message is: %s\n", decrypted_message);
+
+        free(decrypted_message);
+        free(text);
+
+        return 0;
+    }
+    else if (cipher_selected == 2)
+    {
+        //Decrypting Vigenere
+        char *original_text = decrypt_vigenere(text, key);
+        if (original_text == NULL)
+        {
+            printf("\nNo enough memory!\n");
+
+            return MEMORY_ERROR;
+        }
+
+        printf("\nThe Original Text is: %s\n", original_text);
+
+        free(original_text);
+        free(text);
+        free(key);
+
+        return 0;
+    }
+    else if (cipher_selected == 3)
+    {
+        //Decrypting XOR
+        size_t text_length;
+
+        unsigned char *result = hex_to_bytes(text, &text_length);
+        if (result == NULL)
+        {
+            printf("\nInvalid hex input.\n");
+            free(text);
+            free(key);
+            return INPUT_ERROR;
+        }
+
+        XOR_cipher((char *)result, text_length, key);
+        printf("\nThe Original Text is: %.*s\n", (int)text_length, result);
+
+        free(text);
+        free(key);
+
+        return 0;
+    }
+    else if (cipher_selected == 4)
+    {
+        //Decrypting playfair
+        char matrix[5][5];
+
+        char digraphs[100][3];
+        int counter = 0;
+
+        bool trim = trimming(&key);
+        if (!trim)
+        {
+            free(key);
+            return MEMORY_ERROR;
+        }
+
+        matrix_5x5(matrix, key);
+        splitting_digraphs(text, digraphs, &counter);
+
+        char *originaltext = decrypt_playfair(matrix, digraphs, counter);
+        if (!originaltext) return MEMORY_ERROR;
+
+        int length = strlen(originaltext);
+        int k = 0, i = 0;
+        char *temp = malloc(length + 1);
+        if (!temp) {
+            free(originaltext);
+            free(key);
+            return MEMORY_ERROR;
+        }
+
+        while (i < length)
+        {
+            if (i + 2 < length && originaltext[i] == originaltext[i + 2] && originaltext[i + 1] == 'x')
+            {
+                temp[k++] = originaltext[i];
+                temp[k++] = originaltext[i + 2];
+                i += 3;
+            }
+            else
+            {
+                temp[k++] = originaltext[i++];
+            }
+        }
+
+        if (k > 0 && temp[k - 1] == 'x')
+        {
+            k--;
+        }
+
+        temp[k] = '\0';
+        free(originaltext);
+        originaltext = temp;
+
+        printf("\nThe Original text is: %s\n", originaltext);
+
+        free(originaltext);
+        free(key);
+
+        return 0;
+    }
+    else if (cipher_selected == 5)
+    {
+        //Decrypting Rail Fence
+        char *originaltext = decrypt_railfence(text, int_key);
+        if (!originaltext)
+        {
+            printf("\nNo enough memory!\n");
+            free(text);
+            return MEMORY_ERROR;
+        }
+
+        printf("\nThe Original text is: %s\n", originaltext);
+
+        free(originaltext);
+        free(text);
+
+        return 0;
+    }
+    else
+    {
+        printf("\nINVALID IPUT!\n");
+
+        return INPUT_ERROR;
+    }
+
+    return 0;
+}
+
+int handling_file_encryption(void)
+{
+    printf("\nWhat type of file do you want to encrypt?\n \n");
+
+    int file_type_selected = choose_file_type();
+    if (file_type_selected == INPUT_ERROR)
+    {
+        printf("Ivalid Input!!\n");
+        return INPUT_ERROR;
+    }
+
+    char *name_input = get_file_name();
+    if (!name_input) return MEMORY_ERROR;
+
+    FILE *input_file;
+    FILE *output_file;
+
+    if (file_input_handling(file_type_selected, &input_file, name_input))
+    {
+        free(name_input);
+        return FILE_ERROR;
+    }
+
+    char *file_extension = get_file_extension(name_input);
+    if (!file_extension) 
+    {
+        free(name_input);
+        return MEMORY_ERROR;
+    }
+
+    char *name_output = get_output_file(file_extension, file_type_selected);
+    if (!name_output)
+    {
+        free(name_input);
+        free(file_extension);
+
+        fclose(input_file);
+        return FILE_ERROR;
+    }
+
+    if (file_output_handling(file_type_selected, &output_file, name_output))
+    {
+        free(name_input);
+        free(file_extension);
+        free(name_output);
+
+        fclose(input_file);
+        return FILE_ERROR;
+    }
+
+    if (file_type_selected == 1)
+    {
+        //==== Text files ====
+        int cipher_selected = text_file_cipher_menu();
+
+        if (strcasecmp(file_extension, ".txt") != 0 && strcasecmp(file_extension, ".csv") != 0)
+        {
+            printf("\nINVALID file extension!!\n");
+
+            free(name_input);
+            free(file_extension);
+
+            fclose(input_file);
+            return FILE_ERROR;
+        }
+
+        if (cipher_selected == 1)
+        {
+            printf("\nThe key must be a number greater than or equal 1 and less than or equal 25\n");
+            int key = get_int("\nEnter the key: ");
+
+            while (1)
+            {
+                if (key < 1 || key > 25)
+                {
+                    printf("\nINVALID INPUT!!\n");
+                    printf("The key must be a number greater than or equal 1 and less than or equal 25\n");
+
+                    key = get_int("\nEnter the key: ");
+                    continue;
+                }
+
+                break;
+            }
+
+            encrypt_file_caesar(input_file, output_file, key);
+            printf("\nSuccess!!\n");
+            printf("\nYour encrypted file is saved as: %s\n", name_output);
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            return 0;
+        }
+        else if (cipher_selected == 2)
+        {
+            printf("\nNote: For better security, a key length equal to the text length is recommended.\n");
+            printf("If your key is too short, it will be repeated.\n");
+            printf("If your key is too long, the extra characters will be ignored.\n");
+
+            char *key = get_string("\nEnter the key: ");
+            if (key == NULL)
+            {
+                printf("\nNo enough memory!!\n");
+
+                free(name_input);
+                free(name_output);
+                free(file_extension);
+
+                fclose(input_file);
+                fclose(output_file);
+
+                return MEMORY_ERROR;
+            }
+
+            XOR_file_cipher(input_file, output_file, key);
+            printf("\nSuccess!!\n");
+            printf("\nYour encrypted file is saved as: %s\n", name_output);
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            return 0;
+        }
+        else
+        {
+            printf("\nINVALID INPUT\n");
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            fclose(input_file);
+            fclose(output_file);
+
+            return INPUT_ERROR;
+        }
+    }
+    else if (file_type_selected == 2)
+    {
+        //==== Binary files ====
+        int cipher_selected = binary_file_cipher_menu();
+
+        if (cipher_selected == 1)
+        {
+            char *key = get_string("\nEnter the key: ");
+            if (key == NULL)
+            {
+                printf("\nNo enough memory!!\n");
+
+                free(name_input);
+                free(name_output);
+                free(file_extension);
+
+                fclose(input_file);
+                fclose(output_file);
+
+                return MEMORY_ERROR;
+            }
+
+            XOR_file_cipher(input_file, output_file, key);
+            printf("\nSuccess!!\n");
+            printf("\nYour encrypted file is saved as: %s\n", name_output);
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            return 0;
+        }
+        else if (cipher_selected == 2)
+        {
+            printf("\nThe key must be a number greater than or equal 1 and less than or equal 7\n");
+            int key = get_int("\nEnter the key: ");
+
+            while (1)
+            {
+                if (key < 1 || key > 7)
+                {
+                    printf("\nINVALID INPUT!!\n");
+                    printf("The key must be a number greater than or equal 1 and less than or equal 7\n");
+
+                    key = get_int("\nEnter the key: ");
+                    continue;
+                }
+
+                break;
+            }
+
+            encrypt_file_bit_rotation(input_file, output_file, key);
+            printf("\nSuccess!!\n");
+            printf("\nYour encrypted file is saved as: %s\n", name_output);
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            return 0;
+        }
+        else
+        {
+            printf("\nINVALID INPUT\n");
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            fclose(input_file);
+            fclose(output_file);
+
+            return INPUT_ERROR;
+        }
+    }
+    else
+    {
+        printf("\nINVALID INPUT!!\n");
+        return INPUT_ERROR;
+    }
+
+    return 0;
+}
+
+int handling_file_decryption(void)
+{
+    printf("\nWhat type of file do you want to decrypt?\n \n");
+
+    int file_type_selected = choose_file_type();
+    if (file_type_selected == INPUT_ERROR)
+    {
+        printf("Ivalid Input!!\n");
+        return INPUT_ERROR;
+    }
+
+    char *name_input = get_file_name();
+    if (!name_input) return MEMORY_ERROR;
+
+    FILE *input_file;
+    FILE *output_file;
+
+    if (file_input_handling(file_type_selected, &input_file, name_input))
+    {
+        free(name_input);
+        return FILE_ERROR;
+    }
+
+    char *file_extension = get_file_extension(name_input);
+    if (!file_extension) 
+    {
+        free(name_input);
+        return MEMORY_ERROR;
+    }
+
+    char *name_output = get_output_file(file_extension, file_type_selected);
+    if (!name_output)
+    {
+        free(name_input);
+        free(file_extension);
+
+        fclose(input_file);
+        return FILE_ERROR;
+    }
+
+    if (file_output_handling(file_type_selected, &output_file, name_output))
+    {
+        free(name_input);
+        free(file_extension);
+        free(name_output);
+
+        fclose(input_file);
+        return FILE_ERROR;
+    }
+
+    if (file_type_selected == 1)
+    {
+        //==== Text files ====
+        int cipher_selected = text_file_cipher_menu();
+
+        if (strcasecmp(file_extension, ".txt") != 0 && strcasecmp(file_extension, ".csv") != 0)
+        {
+            printf("\nINVALID file extension!!\n");
+
+            free(name_input);
+            free(file_extension);
+
+            fclose(input_file);
+            return FILE_ERROR;
+        }
+
+        if (cipher_selected == 1)
+        {
+            printf("\nThe key must be a number greater than or equal 1 and less than or equal 25\n");
+            int key = get_int("\nEnter the key: ");
+
+            while (1)
+            {
+                if (key < 1 || key > 25)
+                {
+                    printf("\nINVALID INPUT!!\n");
+                    printf("The key must be a number greater than or equal 1 and less than or equal 25\n");
+
+                    key = get_int("\nEnter the key: ");
+                    continue;
+                }
+
+                break;
+            }
+
+            decrypt_file_caesar(input_file, output_file, key);
+            printf("\nSuccess!!\n");
+            printf("\nYour decrypted file is saved as: %s\n", name_output);
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            return 0;
+        }
+        else if (cipher_selected == 2)
+        {
+            char *key = get_string("\nEnter the key: ");
+            if (key == NULL)
+            {
+                printf("\nNo enough memory!!\n");
+
+                free(name_input);
+                free(name_output);
+                free(file_extension);
+
+                fclose(input_file);
+                fclose(output_file);
+
+                return MEMORY_ERROR;
+            }
+
+            XOR_file_cipher(input_file, output_file, key);
+            printf("\nSuccess!!\n");
+            printf("\nYour decrypted file is saved as: %s\n", name_output);
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            return 0;
+        }
+        else
+        {
+            printf("\nINVALID INPUT\n");
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            fclose(input_file);
+            fclose(output_file);
+
+            return INPUT_ERROR;
+        }
+    }
+    else if (file_type_selected == 2)
+    {
+        //==== Binary files ====
+        int cipher_selected = binary_file_cipher_menu();
+
+        if (cipher_selected == 1)
+        {
+            char *key = get_string("\nEnter the key: ");
+            if (key == NULL)
+            {
+                printf("\nNo enough memory!!\n");
+
+                free(name_input);
+                free(name_output);
+                free(file_extension);
+
+                fclose(input_file);
+                fclose(output_file);
+
+                return MEMORY_ERROR;
+            }
+
+            XOR_file_cipher(input_file, output_file, key);
+            printf("\nSuccess!!\n");
+            printf("\nYour decrypted file is saved as: %s\n", name_output);
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            return 0;
+        }
+        else if (cipher_selected == 2)
+        {
+            printf("\nThe key must be a number greater than or equal 1 and less than or equal 7\n");
+            int key = get_int("\nEnter the key: ");
+
+            while (1)
+            {
+                if (key < 1 || key > 7)
+                {
+                    printf("\nINVALID INPUT!!\n");
+                    printf("The key must be a number greater than or equal 1 and less than or equal 7\n");
+
+                    key = get_int("\nEnter the key: ");
+                    continue;
+                }
+
+                break;
+            }
+
+            decrypt_file_bit_rotation(input_file, output_file, key);
+            printf("\nSuccess!!\n");
+            printf("\nYour decrypted file is saved as: %s\n", name_output);
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            return 0;
+        }
+        else
+        {
+            printf("\nINVALID INPUT\n");
+
+            free(name_input);
+            free(name_output);
+            free(file_extension);
+
+            fclose(input_file);
+            fclose(output_file);
+
+            return INPUT_ERROR;
+        }
+    }
+    else
+    {
+        printf("\nINVALID INPUT!!\n");
+        return INPUT_ERROR;
+    }
+
+    return 0;
+}
+
+int file_input_handling(int file_type_selected, FILE **input_file, char *name_input)
+{
+    if (file_type_selected == 1)
+    {
+        *input_file = fopen(name_input, "r");
+        if (*input_file == NULL)
+        {
+            printf("\nCouldn't open the file!!\n");
+            return FILE_ERROR;
+        }
+    }
+    else
+    {
+        *input_file = fopen(name_input, "rb");
+        if (*input_file == NULL)
+        {
+            printf("\nCouldn't open the file!!\n");
+            return FILE_ERROR;
+        }
+    }
+
+    return 0;
+}
+
+int file_output_handling(int file_type_selected, FILE **output_file, char *name_output)
+{
+    if (file_type_selected == 1)
+    {
+        *output_file = fopen(name_output, "w");
+        if (*output_file == NULL)
+        {
+            printf("\nCouldn't open the file\n");
+            return FILE_ERROR;
+        }
+    }
+    else
+    {
+        *output_file = fopen(name_output, "wb");
+        if (*output_file == NULL)
+        {
+            printf("\nCouldn't open the file\n");
+            return FILE_ERROR;
+        }
+    }
+
+    return 0;
+}
