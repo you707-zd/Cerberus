@@ -6,9 +6,9 @@
 >The program follows a decision-based flow control system, where each user input determines the next set of options, guiding the user through a structured sequence until the final output is generated.
 >I was determined in this project to build this project on my own, without relying on external libraries or CS50 helpers.
 
-#### This project is modularized into five main files: ```main.c```, ```helpers.c```, ```encrypt.c```, ```decrypt.c```, and ```file_io.c```. Each file has its own specific role.
+#### This project is modularized into six main files: ```main.c```, ```helpers.c```, ```encrypt.c```, ```decrypt.c```, ```flow_logic.c```,and ```file_io.c```. Each file has its own specific role.
 - ```main.c``` is responsible for controlling the program's flow and handling user interaction.
-
+- ```flow_logic.c``` is the file responsible for the flow logic and UX. It handles user input, route selection, and cipher selection.
 - ```helpers.c``` contains categorized utility functions used to support various parts of the program. Some functions are general-purpose (like input handlers), while others serve specific components, such as menu control and file handling.
 - The encryption and decryption logic is divided into two main categories: raw text and file handling.
 - For raw text, the logic is split between  ```encrypt.c``` and ```decrypt.c```.
@@ -19,11 +19,7 @@
 
 > Note: Colors indicate data type and operation; blue for raw text encryption, green for file encryption, orange for raw text decryption, and red for file decryption.
 
-```main.c``` is the file where I coded the user interface and the decision-driven menu logic, I like to say it's the file that gathers all the puzzle pieces together.
-
-The diagram above represents the decision-driven menu logic used in main.c. Each user input determines the next step; starting from choosing encryption or decryption, then selecting raw text or file operations, and finally picking the cipher to apply.
-
-To make the user experience smoother, I added flexible input validation. The user can enter either the number of their choice or type the actual name of the option, and the program will handle both correctly.
+```main.c``` serves as the entry point and root of the decision tree, routing user input to the appropriate handler. ```flow_logic.c``` contains the actual flow logic and UX handling for each route.
 
 ### ```encrypt.c``` and ```decrypt.c```
 These two files handles the raw text ciphers, ```encrypt.c``` is responsible for the encryption logic, while ```decrypt.c``` handles the decryption logic for each cipher.
