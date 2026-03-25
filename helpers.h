@@ -3,6 +3,11 @@
 
 #include <stddef.h>
 
+//Error Values
+#define INPUT_ERROR -1
+#define MEMORY_ERROR -2
+#define FILE_ERROR -3
+
 //My own get input
 char *get_string(char *prompt);
 int get_int(char *prompt);
