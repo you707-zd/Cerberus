@@ -28,7 +28,6 @@ int main(void)
         else
         {
             printf("\nINVALID INPUT!!\n");
-
             return INPUT_ERROR;
         }
     }
@@ -51,19 +50,13 @@ int main(void)
         else
         {
             printf("\nINVALID INPUT!!\n");
-
             return INPUT_ERROR;
         }
     }
-    else if (mode == 3)
-    {
-        return 0;
-    }
+    else if (mode == 3) return 0;
     else
     {
         printf("INVALID INPUT!!\n");
-
         return INPUT_ERROR;
     }
-
 }
